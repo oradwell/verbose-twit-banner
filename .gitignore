@@ -1,0 +1,5 @@
+images/
+# Binary
+*.exe
+*.exe~
+verbose-twit-banner
