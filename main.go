@@ -1,31 +1,41 @@
 package main
 
-import jpeg "image/jpeg"
+import _ "image/jpeg"
+import "image/png"
+import "image/draw"
+import "image/color"
 import "image"
 
 import "os"
-import "bufio"
+
+// import "bufio"
 
 func main() {
-	file, err := os.Open("images/skate-1500x500.jpg")
+	// file, err := os.Open("images/skate-1500x500.jpg")
+
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// reader := bufio.NewReader(file)
+
+	// decodedImage, _, err := image.Decode(reader)
+
+	// myRectangle := image.Rect(10, 20, 30, 40)
+
+	m := image.NewRGBA(image.Rect(0, 0, 640, 480))
+	grey := color.RGBA{150, 150, 150, 255}
+	draw.Draw(m, m.Bounds(), &image.Uniform{grey}, image.ZP, draw.Src)
+
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	outFile, err := os.Create("images/out.png")
 
 	if err != nil {
 		panic(err)
 	}
 
-	reader := bufio.NewReader(file)
-
-	decodedImage, _, err := image.Decode(reader)
-
-	if err != nil {
-		panic(err)
-	}
-
-	outFile, err := os.Create("images/out.jpg")
-
-	if err != nil {
-		panic(err)
-	}
-
-	jpeg.Encode(outFile, decodedImage, &jpeg.Options{Quality: 90})
+	png.Encode(outFile, m)
 }
