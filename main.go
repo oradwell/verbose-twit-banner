@@ -1,35 +1,67 @@
 package main
 
-import _ "image/jpeg"
-import "image/png"
-import "image/draw"
-import "image/color"
+import "bufio"
+import "github.com/golang/freetype"
 import "image"
-
+import "image/color"
+import "image/draw"
+import "image/png"
+import "io/ioutil"
 import "os"
-
-// import "bufio"
+import _ "image/jpeg"
 
 func main() {
-	// file, err := os.Open("images/skate-1500x500.jpg")
+	const fontFileName = "fonts/OpenSans-VariableFont_wdth,wght.ttf"
 
-	// if err != nil {
-	// 	panic(err)
-	// }
+	file, err := os.Open("images/skate-1500x500.jpg")
 
-	// reader := bufio.NewReader(file)
+	if err != nil {
+		panic(err)
+	}
 
-	// decodedImage, _, err := image.Decode(reader)
+	reader := bufio.NewReader(file)
 
-	// myRectangle := image.Rect(10, 20, 30, 40)
+	decodedImage, _, err := image.Decode(reader)
 
-	m := image.NewRGBA(image.Rect(0, 0, 640, 480))
+	decodedImageBounds := decodedImage.Bounds()
+	decodedRectangle := image.NewRGBA(image.Rect(0, 0, decodedImageBounds.Dx(), decodedImageBounds.Dy()))
+	draw.Draw(decodedRectangle, decodedRectangle.Bounds(), decodedImage, decodedImageBounds.Min, draw.Src)
+
+	greyRectangle := image.Rect(1082, 22, 1482, 272)
+	greyBg := image.NewRGBA(greyRectangle)
 	grey := color.RGBA{150, 150, 150, 255}
-	draw.Draw(m, m.Bounds(), &image.Uniform{grey}, image.ZP, draw.Src)
+	opacity := color.Alpha{150}
+	draw.DrawMask(decodedRectangle, greyBg.Bounds(), &image.Uniform{grey}, image.ZP, &image.Uniform{opacity}, image.ZP, draw.Over)
 
-	// if err != nil {
-	// 	panic(err)
-	// }
+	ftContext := freetype.NewContext()
+
+	fontBytes, err := ioutil.ReadFile(fontFileName)
+
+	if err != nil {
+		panic(err)
+	}
+
+	font, err := freetype.ParseFont(fontBytes)
+
+	if err != nil {
+		panic(err)
+	}
+
+	fontSize := 32
+	ftContext.SetDPI(72)
+	ftContext.SetFont(font)
+	ftContext.SetFontSize(float64(fontSize))
+	ftContext.SetClip(decodedRectangle.Bounds())
+	ftContext.SetDst(decodedRectangle)
+	ftContext.SetSrc(image.Black)
+
+	labelPoint := freetype.Pt(greyRectangle.Min.X+10, greyRectangle.Min.Y+fontSize)
+
+	_, err = ftContext.DrawString("my text", labelPoint)
+
+	if err != nil {
+		panic(err)
+	}
 
 	outFile, err := os.Create("images/out.png")
 
@@ -37,5 +69,5 @@ func main() {
 		panic(err)
 	}
 
-	png.Encode(outFile, m)
+	png.Encode(outFile, decodedRectangle)
 }
