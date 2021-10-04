@@ -14,7 +14,6 @@ func main() {
 	const fontFileName = "fonts/OpenSans-VariableFont_wdth,wght.ttf"
 
 	file, err := os.Open("images/skate-1500x500.jpg")
-
 	if err != nil {
 		panic(err)
 	}
@@ -22,6 +21,9 @@ func main() {
 	reader := bufio.NewReader(file)
 
 	decodedImage, _, err := image.Decode(reader)
+	if err != nil {
+		panic(err)
+	}
 
 	decodedImageBounds := decodedImage.Bounds()
 	decodedRectangle := image.NewRGBA(image.Rect(0, 0, decodedImageBounds.Dx(), decodedImageBounds.Dy()))
@@ -36,13 +38,11 @@ func main() {
 	ftContext := freetype.NewContext()
 
 	fontBytes, err := ioutil.ReadFile(fontFileName)
-
 	if err != nil {
 		panic(err)
 	}
 
 	font, err := freetype.ParseFont(fontBytes)
-
 	if err != nil {
 		panic(err)
 	}
@@ -57,14 +57,19 @@ func main() {
 
 	labelPoint := freetype.Pt(greyRectangle.Min.X+10, greyRectangle.Min.Y+fontSize)
 
-	_, err = ftContext.DrawString("my text", labelPoint)
+	_, err = ftContext.DrawString("204 Following", labelPoint)
+	if err != nil {
+		panic(err)
+	}
 
+	labelPoint = freetype.Pt(greyRectangle.Min.X+10, greyRectangle.Min.Y+fontSize*2+10)
+
+	_, err = ftContext.DrawString("68 Followers", labelPoint)
 	if err != nil {
 		panic(err)
 	}
 
 	outFile, err := os.Create("images/out.png")
-
 	if err != nil {
 		panic(err)
 	}
