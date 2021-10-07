@@ -1,15 +1,21 @@
 package main
 
-import "bufio"
-import "github.com/golang/freetype"
-import "github.com/golang/freetype/truetype"
-import "image"
-import "image/color"
-import "image/draw"
-import "image/png"
-import "io/ioutil"
-import "os"
-import _ "image/jpeg"
+import (
+	"bufio"
+	"encoding/json"
+	"flag"
+	"fmt"
+	"github.com/golang/freetype"
+	"github.com/golang/freetype/truetype"
+	"image"
+	"image/color"
+	"image/draw"
+	_ "image/jpeg"
+	"image/png"
+	"io/ioutil"
+	"net/http"
+	"os"
+)
 
 func getDrawableFromImagePath(imagePath string) *image.RGBA {
 	file, err := os.Open(imagePath)
@@ -85,6 +91,85 @@ func writeToPng(filename string, drawable *image.RGBA) {
 	png.Encode(outFile, drawable)
 }
 
+func getTwitterApiClient(bearerToken string) *http.Client {
+	return &http.Client{}
+}
+
+func getTwitterUserData(bearerToken string, username string) map[string]string {
+	client := getTwitterApiClient(bearerToken)
+
+	type userLookup struct {
+		Id       string `json:"id"`
+		Name     string `json:"name"`
+		Username string `json:"username"`
+	}
+
+	type publicMetrics struct {
+		FollowerCount  int `json:"followers_count"`
+		FollowingCount int `json:"following_count"`
+		TweetCount     int `json:"tweet_count"`
+		ListedCount    int `json:"listed_count"`
+	}
+
+	type user struct {
+		PublicMetrics publicMetrics `json:"public_metrics"`
+		Location      string
+	}
+
+	req, err := http.NewRequest("GET", "https://api.twitter.com/2/users/by/username/"+username, nil)
+	if err != nil {
+		panic(err)
+	}
+	req.Header.Add("Authorization", "Bearer "+bearerToken)
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+
+	dec := json.NewDecoder(resp.Body)
+	var dat = make(map[string]userLookup)
+	err = dec.Decode(&dat)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(dat["data"].Id)
+
+	req, err = http.NewRequest("GET", "https://api.twitter.com/2/users/"+dat["data"].Id+"?user.fields=public_metrics,location", nil)
+	if err != nil {
+		panic(err)
+	}
+	req.Header.Add("Authorization", "Bearer "+bearerToken)
+	resp, err = client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+
+	dec = json.NewDecoder(resp.Body)
+	userDat := make(map[string]user)
+	err = dec.Decode(&userDat)
+	if err != nil {
+		panic(err)
+	}
+
+	return map[string]string{
+		"followers_count": fmt.Sprintf("%d", userDat["data"].PublicMetrics.FollowerCount),
+		"following_count": fmt.Sprintf("%d", userDat["data"].PublicMetrics.FollowingCount),
+		"tweet_count":     fmt.Sprintf("%d", userDat["data"].PublicMetrics.TweetCount),
+		"listed_count":    fmt.Sprintf("%d", userDat["data"].PublicMetrics.ListedCount),
+		"location":        userDat["data"].Location,
+	}
+}
+
+func getLines(metrics map[string]string) []string {
+	return []string{
+		fmt.Sprintf("%s Following", metrics["following_count"]),
+		fmt.Sprintf("%s Followers", metrics["followers_count"]),
+		fmt.Sprintf("%s Tweets", metrics["tweet_count"]),
+		fmt.Sprintf("In %s lists", metrics["listed_count"]),
+		fmt.Sprintf("Located in %s", metrics["location"]),
+	}
+}
+
 func main() {
 	const fontPath = "fonts/OpenSans-VariableFont_wdth,wght.ttf"
 	const outPath = "images/out.png"
@@ -101,7 +186,12 @@ func main() {
 	const overlayY1 = 272
 	const textPadding = 10
 
-	lines := []string{"204 Following", "68 Followers", "405 Tweets"}
+	bearerToken := flag.String("bearer", "", "Twitter Bearer Token")
+	username := flag.String("username", "oliverradwell", "Twitter username")
+
+	flag.Parse()
+
+	lines := getLines(getTwitterUserData(*bearerToken, *username))
 
 	overlayColour := color.RGBA{overlayColourRed, overlayColourBlue, overlayColourGreen, 255}
 
