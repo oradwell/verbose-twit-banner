@@ -1,6 +1,10 @@
-images/
-fonts/
 # Binary
 *.exe
 *.exe~
 verbose-twit-banner
+
+# Local configuration
+.env
+
+# Output
+out.png

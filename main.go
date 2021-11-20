@@ -7,15 +7,42 @@ import (
 	"fmt"
 	"github.com/golang/freetype"
 	"github.com/golang/freetype/truetype"
+	"github.com/joho/godotenv"
 	"image"
 	"image/color"
 	"image/draw"
 	_ "image/jpeg"
 	"image/png"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"os"
+	"path/filepath"
+	"time"
 )
+
+func getJpegPathInDirectory(directory string) string {
+	var files []string
+
+	filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			fmt.Println(err)
+			return nil
+		}
+
+		fileExt := filepath.Ext(path)
+
+		if !info.IsDir() && (fileExt == ".jpg" || fileExt == ".jpeg") {
+			files = append(files, path)
+		}
+
+		return nil
+	})
+
+	rand.Seed(time.Now().Unix())
+
+	return files[rand.Intn(len(files))]
+}
 
 func getDrawableFromImagePath(imagePath string) *image.RGBA {
 	file, err := os.Open(imagePath)
@@ -132,7 +159,6 @@ func getTwitterUserData(bearerToken string, username string) map[string]string {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(dat["data"].Id)
 
 	req, err = http.NewRequest("GET", "https://api.twitter.com/2/users/"+dat["data"].Id+"?user.fields=public_metrics,location", nil)
 	if err != nil {
@@ -161,19 +187,26 @@ func getTwitterUserData(bearerToken string, username string) map[string]string {
 }
 
 func getLines(metrics map[string]string) []string {
-	return []string{
+	lines := []string{
 		fmt.Sprintf("%s Following", metrics["following_count"]),
 		fmt.Sprintf("%s Followers", metrics["followers_count"]),
 		fmt.Sprintf("%s Tweets", metrics["tweet_count"]),
 		fmt.Sprintf("In %s lists", metrics["listed_count"]),
-		fmt.Sprintf("Located in %s", metrics["location"]),
 	}
+
+	if metrics["location"] != "" {
+		lines = append(lines, fmt.Sprintf("Located in %s", metrics["location"]))
+	}
+
+	lines = append(lines, fmt.Sprintf("%s", time.Now().UTC().Format("2006-01-02 15:04 MST")))
+
+	return lines
 }
 
 func main() {
 	const fontPath = "fonts/OpenSans-VariableFont_wdth,wght.ttf"
-	const outPath = "images/out.png"
-	const srcPath = "images/skate-1500x500.jpg"
+	const outPath = "out.png"
+	const imageDir = "images"
 	const fontDpi = 72.0
 	const fontSize = 32.0
 	const overlayColourRed = 150
@@ -186,14 +219,31 @@ func main() {
 	const overlayY1 = 272
 	const textPadding = 10
 
-	bearerToken := flag.String("bearer", "", "Twitter Bearer Token")
-	username := flag.String("username", "oliverradwell", "Twitter username")
+	godotenv.Load()
+
+	defaultUsername := os.Getenv("TWITTER_USERNAME")
+	if defaultUsername == "" {
+		defaultUsername = "oliverradwell"
+	}
+
+	bearerToken := flag.String("bearer", os.Getenv("TWITTER_BEARER"), "Twitter Bearer Token")
+	username := flag.String("username", defaultUsername, "Twitter username")
+	debug := flag.Bool("debug", os.Getenv("DEBUG") != "", "Debug")
 
 	flag.Parse()
+
+	if *bearerToken == "" {
+		panic("Twitter Bearer Token is required to be passed via '--bearer' parameter or via 'TWITTER_BEARER' environment variable")
+	}
 
 	lines := getLines(getTwitterUserData(*bearerToken, *username))
 
 	overlayColour := color.RGBA{overlayColourRed, overlayColourBlue, overlayColourGreen, 255}
+
+	srcPath := getJpegPathInDirectory(imageDir)
+	if *debug {
+		fmt.Printf("Using image: %s\n", srcPath)
+	}
 
 	drawable := getDrawableFromImagePath(srcPath)
 
