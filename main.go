@@ -2,9 +2,11 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/dghubble/oauth1"
 	"github.com/golang/freetype"
 	"github.com/golang/freetype/truetype"
 	"github.com/joho/godotenv"
@@ -15,8 +17,10 @@ import (
 	"image/draw"
 	_ "image/jpeg"
 	"image/png"
+	"io"
 	"io/ioutil"
 	"math/rand"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -120,8 +124,38 @@ func writeToPng(filename string, drawable *image.RGBA) {
 	png.Encode(outFile, drawable)
 }
 
-func getTwitterApiClient(bearerToken string) *http.Client {
-	return &http.Client{}
+func updateBanner(consumerKey string, consumerSecret string, accessToken string, accessSecret string, drawable *image.RGBA) {
+	config := oauth1.NewConfig(consumerKey, consumerSecret)
+	token := oauth1.NewToken(accessToken, accessSecret)
+
+	client := config.Client(oauth1.NoContext, token)
+
+	var body bytes.Buffer
+
+	writer := multipart.NewWriter(&body)
+
+	fw, err := writer.CreateFormFile("banner", "out.png")
+	if err != nil {
+		panic(err)
+	}
+
+	file, _ := os.Open("out.png")
+	io.Copy(fw, file)
+
+	writer.Close()
+
+	req, err := http.NewRequest("POST", "https://api.twitter.com/1.1/account/update_profile_banner.json", &body)
+	if err != nil {
+		panic(err)
+	}
+
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(resp)
 }
 
 func getTwitterUserData(consumerKey string, consumerSecret string, username string) map[string]string {
@@ -234,6 +268,8 @@ func main() {
 
 	consumerKey := flag.String("consumer-key", os.Getenv("TWITTER_APP_CONSUMER_KEY"), "Twitter App consumer key")
 	consumerSecret := flag.String("consumer-secret", os.Getenv("TWITTER_APP_CONSUMER_SECRET"), "Twitter App consumer secret")
+	accessToken := flag.String("access-token", os.Getenv("TWITTER_ACCESS_TOKEN"), "Twitter User access token")
+	accessSecret := flag.String("access-secret", os.Getenv("TWITTER_ACCESS_SECRET"), "Twitter User access secret")
 	username := flag.String("username", defaultUsername, "Twitter username")
 	debug := flag.Bool("debug", os.Getenv("DEBUG") != "", "Debug")
 
@@ -265,4 +301,6 @@ func main() {
 	addLines(overlayRectangle, ftContext, lines, int(fontSize), textPadding)
 
 	writeToPng(outPath, drawable)
+
+	updateBanner(*consumerKey, *consumerSecret, *accessToken, *accessSecret, drawable)
 }
