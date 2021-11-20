@@ -17,7 +17,6 @@ import (
 	"image/draw"
 	_ "image/jpeg"
 	"image/png"
-	"io"
 	"io/ioutil"
 	"math/rand"
 	"mime/multipart"
@@ -134,13 +133,12 @@ func updateBanner(consumerKey string, consumerSecret string, accessToken string,
 
 	writer := multipart.NewWriter(&body)
 
-	fw, err := writer.CreateFormFile("banner", "out.png")
+	fw, err := writer.CreateFormField("banner")
 	if err != nil {
 		panic(err)
 	}
 
-	file, _ := os.Open("out.png")
-	io.Copy(fw, file)
+	png.Encode(fw, drawable)
 
 	writer.Close()
 
@@ -271,7 +269,7 @@ func main() {
 	accessToken := flag.String("access-token", os.Getenv("TWITTER_ACCESS_TOKEN"), "Twitter User access token")
 	accessSecret := flag.String("access-secret", os.Getenv("TWITTER_ACCESS_SECRET"), "Twitter User access secret")
 	username := flag.String("username", defaultUsername, "Twitter username")
-	debug := flag.Bool("debug", os.Getenv("DEBUG") != "", "Debug")
+	debug := flag.Bool("debug", os.Getenv("DEBUG") != "", "If enabled, image is written to out.png")
 
 	flag.Parse()
 
@@ -300,7 +298,9 @@ func main() {
 
 	addLines(overlayRectangle, ftContext, lines, int(fontSize), textPadding)
 
-	writeToPng(outPath, drawable)
+	if *debug {
+		writeToPng(outPath, drawable)
+	}
 
 	updateBanner(*consumerKey, *consumerSecret, *accessToken, *accessSecret, drawable)
 }
