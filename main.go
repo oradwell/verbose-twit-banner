@@ -8,6 +8,8 @@ import (
 	"github.com/golang/freetype"
 	"github.com/golang/freetype/truetype"
 	"github.com/joho/godotenv"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/clientcredentials"
 	"image"
 	"image/color"
 	"image/draw"
@@ -122,8 +124,14 @@ func getTwitterApiClient(bearerToken string) *http.Client {
 	return &http.Client{}
 }
 
-func getTwitterUserData(bearerToken string, username string) map[string]string {
-	client := getTwitterApiClient(bearerToken)
+func getTwitterUserData(consumerKey string, consumerSecret string, username string) map[string]string {
+	config := &clientcredentials.Config{
+		ClientID:     consumerKey,
+		ClientSecret: consumerSecret,
+		TokenURL:     "https://api.twitter.com/oauth2/token",
+	}
+
+	client := config.Client(oauth2.NoContext)
 
 	type userLookup struct {
 		Id       string `json:"id"`
@@ -147,7 +155,6 @@ func getTwitterUserData(bearerToken string, username string) map[string]string {
 	if err != nil {
 		panic(err)
 	}
-	req.Header.Add("Authorization", "Bearer "+bearerToken)
 	resp, err := client.Do(req)
 	if err != nil {
 		panic(err)
@@ -164,7 +171,6 @@ func getTwitterUserData(bearerToken string, username string) map[string]string {
 	if err != nil {
 		panic(err)
 	}
-	req.Header.Add("Authorization", "Bearer "+bearerToken)
 	resp, err = client.Do(req)
 	if err != nil {
 		panic(err)
@@ -226,17 +232,18 @@ func main() {
 		defaultUsername = "oliverradwell"
 	}
 
-	bearerToken := flag.String("bearer", os.Getenv("TWITTER_BEARER"), "Twitter Bearer Token")
+	consumerKey := flag.String("consumer-key", os.Getenv("TWITTER_APP_CONSUMER_KEY"), "Twitter App consumer key")
+	consumerSecret := flag.String("consumer-secret", os.Getenv("TWITTER_APP_CONSUMER_SECRET"), "Twitter App consumer secret")
 	username := flag.String("username", defaultUsername, "Twitter username")
 	debug := flag.Bool("debug", os.Getenv("DEBUG") != "", "Debug")
 
 	flag.Parse()
 
-	if *bearerToken == "" {
-		panic("Twitter Bearer Token is required to be passed via '--bearer' parameter or via 'TWITTER_BEARER' environment variable")
+	if *consumerKey == "" || *consumerSecret == "" {
+		panic("Twitter consumer key and consumer secret are required to be passed in")
 	}
 
-	lines := getLines(getTwitterUserData(*bearerToken, *username))
+	lines := getLines(getTwitterUserData(*consumerKey, *consumerSecret, *username))
 
 	overlayColour := color.RGBA{overlayColourRed, overlayColourBlue, overlayColourGreen, 255}
 
