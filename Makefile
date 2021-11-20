@@ -5,6 +5,6 @@ lint:
 format:
 	go fmt
 run:
-	go run main.go
+	go run github.com/oradwell/verbose-twit-banner
 clean:
 	rm -f verbose-twit-banner

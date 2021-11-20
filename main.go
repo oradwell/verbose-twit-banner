@@ -2,11 +2,9 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/dghubble/oauth1"
 	"github.com/golang/freetype"
 	"github.com/golang/freetype/truetype"
 	"github.com/joho/godotenv"
@@ -19,7 +17,6 @@ import (
 	"image/png"
 	"io/ioutil"
 	"math/rand"
-	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -121,39 +118,6 @@ func writeToPng(filename string, drawable *image.RGBA) {
 	}
 
 	png.Encode(outFile, drawable)
-}
-
-func updateBanner(consumerKey string, consumerSecret string, accessToken string, accessSecret string, drawable *image.RGBA) {
-	config := oauth1.NewConfig(consumerKey, consumerSecret)
-	token := oauth1.NewToken(accessToken, accessSecret)
-
-	client := config.Client(oauth1.NoContext, token)
-
-	var body bytes.Buffer
-
-	writer := multipart.NewWriter(&body)
-
-	fw, err := writer.CreateFormField("banner")
-	if err != nil {
-		panic(err)
-	}
-
-	png.Encode(fw, drawable)
-
-	writer.Close()
-
-	req, err := http.NewRequest("POST", "https://api.twitter.com/1.1/account/update_profile_banner.json", &body)
-	if err != nil {
-		panic(err)
-	}
-
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-	resp, err := client.Do(req)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println(resp)
 }
 
 func getTwitterUserData(consumerKey string, consumerSecret string, username string) map[string]string {
@@ -302,5 +266,5 @@ func main() {
 		writeToPng(outPath, drawable)
 	}
 
-	updateBanner(*consumerKey, *consumerSecret, *accessToken, *accessSecret, drawable)
+	UpdateTwitterBanner(*consumerKey, *consumerSecret, *accessToken, *accessSecret, drawable)
 }
