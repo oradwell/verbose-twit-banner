@@ -2,41 +2,71 @@ package main
 
 import (
 	"bytes"
-	"github.com/dghubble/oauth1"
 	"image"
 	"image/png"
 	"mime/multipart"
 	"net/http"
+
+	"github.com/dghubble/oauth1"
 )
 
-func UpdateTwitterBanner(consumerKey string, consumerSecret string, accessToken string, accessSecret string, drawable *image.RGBA) {
+func getTwitterOauth1Client(consumerKey string, consumerSecret string, accessToken string, accessSecret string) *http.Client {
 	config := oauth1.NewConfig(consumerKey, consumerSecret)
 	token := oauth1.NewToken(accessToken, accessSecret)
 
-	client := config.Client(oauth1.NoContext, token)
+	return config.Client(oauth1.NoContext, token)
+}
 
-	var body bytes.Buffer
+func writeBannerForm(body bytes.Buffer, drawable *image.RGBA) (*multipart.Writer, error) {
+	multipartWriter := multipart.NewWriter(&body)
 
-	writer := multipart.NewWriter(&body)
-
-	fw, err := writer.CreateFormField("banner")
+	fwriter, err := multipartWriter.CreateFormField("banner")
 	if err != nil {
-		panic(err)
+		return multipartWriter, err
 	}
 
-	png.Encode(fw, drawable)
-
-	writer.Close()
-
-	req, err := http.NewRequest("POST", "https://api.twitter.com/1.1/account/update_profile_banner.json", &body)
+	err = png.Encode(fwriter, drawable)
 	if err != nil {
-		panic(err)
+		return multipartWriter, err
 	}
 
-	req.Header.Set("Content-Type", writer.FormDataContentType())
+	multipartWriter.Close()
+
+	return multipartWriter, nil
+}
+
+func doTwitterUploadRequest(client *http.Client, multipartWriter *multipart.Writer, body bytes.Buffer) error {
+	const apiUrl = "https://api.twitter.com/1.1/account/update_profile_banner.json"
+
+	req, err := http.NewRequest("POST", apiUrl, &body)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", multipartWriter.FormDataContentType())
 
 	_, err = client.Do(req)
 	if err != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
+}
+
+func UpdateTwitterBanner(consumerKey string, consumerSecret string, accessToken string, accessSecret string, drawable *image.RGBA) error {
+	var body bytes.Buffer
+
+	client := getTwitterOauth1Client(consumerKey, consumerSecret, accessToken, accessSecret)
+
+	multipartWriter, err := writeBannerForm(body, drawable)
+	if err != nil {
+		return err
+	}
+
+	err = doTwitterUploadRequest(client, multipartWriter, body)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
