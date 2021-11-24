@@ -28,7 +28,7 @@ type user struct {
 	Location      string
 }
 
-func getTwitterClient(consumerKey string, consumerSecret string) *http.Client {
+func getTwitterOauth2Client(consumerKey string, consumerSecret string) *http.Client {
 	config := &clientcredentials.Config{
 		ClientID:     consumerKey,
 		ClientSecret: consumerSecret,
@@ -98,7 +98,7 @@ func GetTextLines(metrics map[string]string) []string {
 }
 
 func GetTwitterUserData(consumerKey string, consumerSecret string, username string) (map[string]string, error) {
-	client := getTwitterClient(consumerKey, consumerSecret)
+	client := getTwitterOauth2Client(consumerKey, consumerSecret)
 
 	userId, err := fetchIdForUsername(client, username)
 	if err != nil {
