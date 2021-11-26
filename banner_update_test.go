@@ -27,22 +27,24 @@ func TestWritesBannerForm(t *testing.T) {
 
 	drawable := GetDrawableFromImagePath(filePath)
 
-	multipartWriter, _ := writeBannerForm(body, drawable)
+	multipartWriter, _ := writeBannerForm(&body, drawable)
 
 	if "*multipart.Writer" != fmt.Sprintf("%T", multipartWriter) {
 		t.Errorf("writeBannerForm(body, drawable) returned %T want *multipart.Writer", multipartWriter)
 	}
 }
 
-func TestDoesTwitterUploadRequest(t *testing.T) {
+func TestTwitterUploadRequestReturnsRequestError(t *testing.T) {
+	const errorMessage = "Failed upload request. Status: 400 Bad Request"
+
 	var body bytes.Buffer
 
 	client := &http.Client{}
 	multipartWriter := multipart.NewWriter(&body)
 
-	err := doTwitterUploadRequest(client, multipartWriter, body)
+	err := doTwitterUploadRequest(client, multipartWriter, &body)
 
-	if err != nil {
-		t.Errorf("doTwitterUploadRequest(client, multipartWriter, body) returned error %q", err)
+	if fmt.Sprintf("%v", err) != errorMessage {
+		t.Errorf("doTwitterUploadRequest(client, multipartWriter, body) returned %#v want %q", fmt.Sprintf("%v", err), errorMessage)
 	}
 }

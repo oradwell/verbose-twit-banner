@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"image"
 	"image/png"
 	"mime/multipart"
@@ -17,8 +19,8 @@ func getTwitterOauth1Client(consumerKey string, consumerSecret string, accessTok
 	return config.Client(oauth1.NoContext, token)
 }
 
-func writeBannerForm(body bytes.Buffer, drawable *image.RGBA) (*multipart.Writer, error) {
-	multipartWriter := multipart.NewWriter(&body)
+func writeBannerForm(body *bytes.Buffer, drawable *image.RGBA) (*multipart.Writer, error) {
+	multipartWriter := multipart.NewWriter(body)
 
 	fwriter, err := multipartWriter.CreateFormField("banner")
 	if err != nil {
@@ -35,20 +37,26 @@ func writeBannerForm(body bytes.Buffer, drawable *image.RGBA) (*multipart.Writer
 	return multipartWriter, nil
 }
 
-func doTwitterUploadRequest(client *http.Client, multipartWriter *multipart.Writer, body bytes.Buffer) error {
+func doTwitterUploadRequest(client *http.Client, multipartWriter *multipart.Writer, body *bytes.Buffer) error {
 	const apiUrl = "https://api.twitter.com/1.1/account/update_profile_banner.json"
 
-	req, err := http.NewRequest("POST", apiUrl, &body)
+	req, err := http.NewRequest("POST", apiUrl, body)
 	if err != nil {
 		return err
 	}
 
 	req.Header.Set("Content-Type", multipartWriter.FormDataContentType())
 
-	_, err = client.Do(req)
+	res, err := client.Do(req)
 	if err != nil {
 		return err
 	}
+
+	if res.StatusCode != 201 {
+		return errors.New(fmt.Sprintf("Failed upload request. Status: %s", res.Status))
+	}
+
+	fmt.Printf("Upload request returned: %s\n", res.Status)
 
 	return nil
 }
@@ -58,12 +66,12 @@ func UpdateTwitterBanner(consumerKey string, consumerSecret string, accessToken 
 
 	client := getTwitterOauth1Client(consumerKey, consumerSecret, accessToken, accessSecret)
 
-	multipartWriter, err := writeBannerForm(body, drawable)
+	multipartWriter, err := writeBannerForm(&body, drawable)
 	if err != nil {
 		return err
 	}
 
-	err = doTwitterUploadRequest(client, multipartWriter, body)
+	err = doTwitterUploadRequest(client, multipartWriter, &body)
 	if err != nil {
 		return err
 	}
