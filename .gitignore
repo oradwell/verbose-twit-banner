@@ -8,3 +8,9 @@ verbose-twit-banner
 
 # Output
 out.png
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db

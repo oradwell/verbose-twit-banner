@@ -16,17 +16,28 @@ const fontPath = "fonts/OpenSans-VariableFont_wdth,wght.ttf"
 const imageDir = "images"
 const fontDpi = 72.0
 const fontSize = 32.0
+
+// Overlay background RGBA values
 const overlayColourRed = 150
 const overlayColourGreen = 150
 const overlayColourBlue = 150
 const overlayOpacity = 150
+
+// Overlay rectangle coordinates
 const overlayX0 = 1082
 const overlayY0 = 22
 const overlayX1 = 1482
-const overlayY1 = 272
+
+// Amount of pixels to allocate
+// to each line when calculating Y1
+// Should take the font size
+// and padding into consideration
+const lineHeight = 46
+
+// Gap between lines
 const textPadding = 10
 
-func getBannerDrawable(consumerKey string, consumerSecret string, username string, debug bool) (*image.RGBA, error) {
+func getBannerDrawable(consumerKey string, consumerSecret string, username string, promotionalLine string, debug bool) (*image.RGBA, error) {
 	overlayColour := color.RGBA{
 		overlayColourRed,
 		overlayColourBlue,
@@ -44,6 +55,15 @@ func getBannerDrawable(consumerKey string, consumerSecret string, username strin
 
 	drawable := GetDrawableFromImagePath(srcPath)
 
+	userData, err := GetTwitterUserData(consumerKey, consumerSecret, username)
+	if err != nil {
+		return image.NewRGBA(image.Rectangle{}), err
+	}
+
+	lines := GetTextLines(userData, promotionalLine)
+	numLines := len(lines)
+	overlayY1 := numLines * lineHeight
+
 	overlayRectangle := image.Rect(overlayX0, overlayY0, overlayX1, overlayY1)
 
 	AddOverlayOnDrawable(drawable, overlayRectangle, &overlayColour, &color.Alpha{overlayOpacity})
@@ -51,12 +71,6 @@ func getBannerDrawable(consumerKey string, consumerSecret string, username strin
 	font := LoadFontFromPath(fontPath)
 
 	ftContext := GetFreetypeContext(font, fontDpi, fontSize, drawable)
-	userData, err := GetTwitterUserData(consumerKey, consumerSecret, username)
-	if err != nil {
-		return image.NewRGBA(image.Rectangle{}), err
-	}
-
-	lines := GetTextLines(userData)
 
 	if debug {
 		fmt.Printf("Lines to print: %v\n", lines)
@@ -82,6 +96,7 @@ func main() {
 	accessToken := flag.String("access-token", os.Getenv("TWITTER_ACCESS_TOKEN"), "Twitter User access token")
 	accessSecret := flag.String("access-secret", os.Getenv("TWITTER_ACCESS_SECRET"), "Twitter User access secret")
 	username := flag.String("username", defaultUsername, "Twitter username")
+	promotionalLine := flag.String("promotional-line", os.Getenv("PROMOTIONAL_LINE"), "Extra line to add to the bottom of the information overlay")
 	loopInterval := flag.Int("interval", 0, "Banner update interval in minutes. With value 0, program exits after updating once")
 	debug := flag.Bool("debug", os.Getenv("DEBUG") != "", "Print more output")
 	dryRun := flag.Bool("dry-run", false, "Write image to out.png instead of updating Twitter banner")
@@ -97,7 +112,7 @@ func main() {
 	}
 
 	for ok := true; ok; ok = (*loopInterval > 0) {
-		drawable, err := getBannerDrawable(*consumerKey, *consumerSecret, *username, *debug)
+		drawable, err := getBannerDrawable(*consumerKey, *consumerSecret, *username, *promotionalLine, *debug)
 		if err != nil {
 			fmt.Printf("Error: %v\n", err)
 
@@ -111,7 +126,7 @@ func main() {
 
 			continue
 		} else {
-			err = UpdateTwitterBanner(*consumerKey, *consumerSecret, *accessToken, *accessSecret, drawable)
+			err = UpdateTwitterBanner(*consumerKey, *consumerSecret, *accessToken, *accessSecret, drawable, *debug)
 			if err != nil {
 				fmt.Printf("Error: %v\n", err)
 

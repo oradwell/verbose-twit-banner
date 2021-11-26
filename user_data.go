@@ -80,7 +80,7 @@ func fetchUserData(client *http.Client, userId string) (map[string]user, error) 
 	return userData, nil
 }
 
-func GetTextLines(metrics map[string]string) []string {
+func GetTextLines(metrics map[string]string, promotionalLine string) []string {
 	lines := []string{
 		fmt.Sprintf("%s Following", metrics["following_count"]),
 		fmt.Sprintf("%s Followers", metrics["followers_count"]),
@@ -93,6 +93,9 @@ func GetTextLines(metrics map[string]string) []string {
 	}
 
 	lines = append(lines, fmt.Sprintf("%s", time.Now().UTC().Format("2006-01-02 15:04 MST")))
+	if promotionalLine != "" {
+		lines = append(lines, promotionalLine)
+	}
 
 	return lines
 }

@@ -65,7 +65,7 @@ func TestGetsTextLines(t *testing.T) {
 		"location":        "London, UK",
 	}
 
-	lines = GetTextLines(metrics)
+	lines = GetTextLines(metrics, "")
 	lines = lines[:len(lines)-1]
 
 	expected = []string{
@@ -82,14 +82,15 @@ func TestGetsTextLines(t *testing.T) {
 
 	delete(metrics, "location")
 
-	lines = GetTextLines(metrics)
-	lines = lines[:len(lines)-1]
+	lines = GetTextLines(metrics, "Promoted string")
+	lines = append(lines[:len(lines)-2], lines[len(lines)-1])
 
 	expected = []string{
 		"5 Following",
 		"10 Followers",
 		"101 Tweets",
 		"In 2 lists",
+		"Promoted string",
 	}
 
 	if !reflect.DeepEqual(lines, expected) {

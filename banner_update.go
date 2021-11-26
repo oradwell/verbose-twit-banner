@@ -37,7 +37,7 @@ func writeBannerForm(body *bytes.Buffer, drawable *image.RGBA) (*multipart.Write
 	return multipartWriter, nil
 }
 
-func doTwitterUploadRequest(client *http.Client, multipartWriter *multipart.Writer, body *bytes.Buffer) error {
+func doTwitterUploadRequest(client *http.Client, multipartWriter *multipart.Writer, body *bytes.Buffer, debug bool) error {
 	const apiUrl = "https://api.twitter.com/1.1/account/update_profile_banner.json"
 
 	req, err := http.NewRequest("POST", apiUrl, body)
@@ -56,12 +56,14 @@ func doTwitterUploadRequest(client *http.Client, multipartWriter *multipart.Writ
 		return errors.New(fmt.Sprintf("Failed upload request. Status: %s", res.Status))
 	}
 
-	fmt.Printf("Upload request returned: %s\n", res.Status)
+	if debug {
+		fmt.Printf("Upload request returned: %s\n", res.Status)
+	}
 
 	return nil
 }
 
-func UpdateTwitterBanner(consumerKey string, consumerSecret string, accessToken string, accessSecret string, drawable *image.RGBA) error {
+func UpdateTwitterBanner(consumerKey string, consumerSecret string, accessToken string, accessSecret string, drawable *image.RGBA, debug bool) error {
 	var body bytes.Buffer
 
 	client := getTwitterOauth1Client(consumerKey, consumerSecret, accessToken, accessSecret)
@@ -71,7 +73,7 @@ func UpdateTwitterBanner(consumerKey string, consumerSecret string, accessToken 
 		return err
 	}
 
-	err = doTwitterUploadRequest(client, multipartWriter, &body)
+	err = doTwitterUploadRequest(client, multipartWriter, &body, debug)
 	if err != nil {
 		return err
 	}

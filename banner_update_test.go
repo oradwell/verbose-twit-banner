@@ -42,7 +42,7 @@ func TestTwitterUploadRequestReturnsRequestError(t *testing.T) {
 	client := &http.Client{}
 	multipartWriter := multipart.NewWriter(&body)
 
-	err := doTwitterUploadRequest(client, multipartWriter, &body)
+	err := doTwitterUploadRequest(client, multipartWriter, &body, false)
 
 	if fmt.Sprintf("%v", err) != errorMessage {
 		t.Errorf("doTwitterUploadRequest(client, multipartWriter, body) returned %#v want %q", fmt.Sprintf("%v", err), errorMessage)
