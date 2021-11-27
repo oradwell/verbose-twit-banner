@@ -25,9 +25,12 @@ Executable will be created as verbose-twit-banner
 
 ### Run in an Interval
 
-Parameter `-interval=<int>` can be used
+Parameter `-interval=<string>` can be used
 to make the program run in a loop.
-The banner image will be updated every `<int>` minutes
+The banner image will be updated
+in the specified time interval (e.g. 5m).
+Valid time units are "ns", "us" (or "µs"),
+"ms", "s", "m", "h".
 
 ### Read-only mode
 
