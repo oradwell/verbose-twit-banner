@@ -9,8 +9,19 @@ that contains your profile statistics
 
 ## Run from Source
 
+**Note:** Environment variables should be in `.env` file.
+
 ```bash
 make run
+```
+
+## Build and Run with Docker
+
+**Note:** Environment variables should be in `.env` file.
+
+```bash
+docker build . -t verbose-twit-banner
+docker run --env-file=.env verbose-twit-banner
 ```
 
 ## Build a Binary
@@ -19,7 +30,7 @@ make run
 make build
 ```
 
-Executable will be created as verbose-twit-banner
+Executable will be created as verbose-twit-banner.
 
 ## Ways of Operation
 
@@ -72,7 +83,7 @@ API call made using this set of credentials:
 
 ## Configuration
 
-The binary has a lot of parameters.
+The binary has a few parameters.
 Some of them also have equivalent environment variables.
 
 ### Command Line Parameters
