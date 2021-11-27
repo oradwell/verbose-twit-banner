@@ -84,6 +84,9 @@ func getBannerDrawable(consumerKey string, consumerSecret string, username strin
 func main() {
 	const outPath = "out.png"
 
+	var loopDuration time.Duration
+	var err error
+
 	godotenv.Load()
 
 	defaultUsername := os.Getenv("TWITTER_USERNAME")
@@ -97,7 +100,7 @@ func main() {
 	accessSecret := flag.String("access-secret", os.Getenv("TWITTER_ACCESS_SECRET"), "Twitter User access secret")
 	username := flag.String("username", defaultUsername, "Twitter username")
 	promotionalLine := flag.String("promotional-line", os.Getenv("PROMOTIONAL_LINE"), "Extra line to add to the bottom of the information overlay")
-	loopInterval := flag.Int("interval", 0, "Banner update interval in minutes. With value 0, program exits after updating once")
+	loopInterval := flag.String("interval", "", "Banner update interval (e.g. 5m). With empty value, program exits after updating once")
 	debug := flag.Bool("debug", os.Getenv("DEBUG") != "", "Print more output")
 	dryRun := flag.Bool("dry-run", false, "Write image to out.png instead of updating Twitter banner")
 
@@ -107,11 +110,18 @@ func main() {
 		panic("Twitter consumer key and consumer secret are required. Use '-h' for details")
 	}
 
-	if *loopInterval > 0 && *dryRun {
-		panic("Dry run doesn't make sense when running unattended")
+	if *loopInterval != "" {
+		loopDuration, err = time.ParseDuration(*loopInterval)
+		if err != nil {
+			panic(fmt.Sprintf("Error parsing interval: %v\n", err))
+		}
+
+		if *dryRun {
+			panic("Dry run doesn't make sense when running unattended")
+		}
 	}
 
-	for ok := true; ok; ok = (*loopInterval > 0) {
+	for ok := true; ok; ok = (*loopInterval != "") {
 		drawable, err := getBannerDrawable(*consumerKey, *consumerSecret, *username, *promotionalLine, *debug)
 		if err != nil {
 			fmt.Printf("Error: %v\n", err)
@@ -135,12 +145,12 @@ func main() {
 			fmt.Println("Updated Twitter banner")
 		}
 
-		if *loopInterval > 0 {
+		if *loopInterval != "" {
 			if *debug {
-				fmt.Printf("Waiting for %d minute(s)\n", *loopInterval)
+				fmt.Printf("Waiting for %s\n", *loopInterval)
 			}
 
-			time.Sleep(time.Duration(*loopInterval) * time.Minute)
+			time.Sleep(loopDuration)
 		}
 	}
 }
