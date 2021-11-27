@@ -1,0 +1,16 @@
+# Binary
+*.exe
+*.exe~
+verbose-twit-banner
+
+# Local configuration
+.env
+
+# Output
+out.png
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
