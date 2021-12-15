@@ -47,7 +47,7 @@ jobs:
       with:
         images: ${{ env.REGISTRY }}/${{ github.repository }}
     - name: Build and push container image
-      if: ${{ github.actor != "dependabot[bot]" && github.repository_owner == "oradwell" }}
+      if: ${{ github.actor != 'dependabot[bot]' && github.repository_owner == 'oradwell' }}
       uses: docker/build-push-action@a66e35b9cbcf4ad0ea91ffcaf7bbad63ad9e0229
       with:
         context: .
