@@ -7,17 +7,18 @@ on:
   pull_request:
     branches: [ "**" ]
 
-env:
-  SRC_DIR: /root/
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-
 jobs:
   build:
     runs-on: ubuntu-20.04
+    permissions:
+      contents: read
+      packages: write
+    env:
+      SRC_DIR: /root/
+      REGISTRY: ghcr.io
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579
     - name: Lint
       run: |
         docker run --entrypoint=bash \
@@ -44,8 +45,9 @@ jobs:
       id: meta
       uses: docker/metadata-action@a2e02890a0d28163b34ac2e4b575b9264a5ee3e2
       with:
-        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-    - name: Build and push Docker image
+        images: ${{ env.REGISTRY }}/${{ github.repository }}
+    - name: Build and push container image
+      if: ${{ github.actor != "dependabot[bot]" && github.repository_owner == "oradwell" }}
       uses: docker/build-push-action@a66e35b9cbcf4ad0ea91ffcaf7bbad63ad9e0229
       with:
         context: .
