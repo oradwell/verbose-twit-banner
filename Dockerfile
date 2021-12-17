@@ -5,7 +5,7 @@ RUN CGO_ENABLED=0 GOOS=linux \
     go build -a -installsuffix cgo \
     -o verbose-twit-banner
 
-FROM alpine:latest
+FROM alpine:3.14.3
 RUN apk --no-cache add ca-certificates \
     && adduser -D twit
 WORKDIR /home/twit/
