@@ -25,7 +25,7 @@ jobs:
           -e GOCACHE=/tmp/.go-build \
           -v ${PWD}:${SRC_DIR}:Z \
           -w ${SRC_DIR} \
-          golang:1.17.3 \
+          golang:1.17.5 \
           -c 'test -z $(gofmt -l .)'
     - name: Test
       run: |
@@ -33,7 +33,7 @@ jobs:
           -e GOCACHE=/tmp/.go-build \
           -v ${PWD}:${SRC_DIR}:Z \
           -w ${SRC_DIR} \
-          golang:1.17.3 \
+          golang:1.17.5 \
           test
     - name: Log in to the Container registry
       uses: docker/login-action@42d299face0c5c43a0487c477f595ac9cf22f1a7
