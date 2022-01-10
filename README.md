@@ -110,6 +110,6 @@ you can also copy the `.env.dist` file into `.env`.
 make test
 ```
 
-# Why?
+# More info
 
-Why not?
+[Program showcase](https://blog.radwell.codes/2022/01/go-program-for-a-unique-twitter-profile-banner/)
