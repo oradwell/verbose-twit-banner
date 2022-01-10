@@ -8,4 +8,5 @@ require (
 	github.com/joho/godotenv v1.4.0
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410 // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
+	gopkg.in/yaml.v2 v2.2.8 // indirect
 )
