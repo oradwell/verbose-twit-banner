@@ -16,6 +16,7 @@ jobs:
     env:
       SRC_DIR: /root/
       REGISTRY: ghcr.io
+      CONTAINER_IMAGE: golang:1.17.6
 
     steps:
     - uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579
@@ -25,7 +26,7 @@ jobs:
           -e GOCACHE=/tmp/.go-build \
           -v ${PWD}:${SRC_DIR}:Z \
           -w ${SRC_DIR} \
-          golang:1.17.5 \
+          ${CONTAINER_IMAGE} \
           -c 'test -z $(gofmt -l .)'
     - name: Test
       run: |
@@ -33,7 +34,7 @@ jobs:
           -e GOCACHE=/tmp/.go-build \
           -v ${PWD}:${SRC_DIR}:Z \
           -w ${SRC_DIR} \
-          golang:1.17.5 \
+          ${CONTAINER_IMAGE} \
           test
     - name: Log in to the Container registry
       uses: docker/login-action@42d299face0c5c43a0487c477f595ac9cf22f1a7
