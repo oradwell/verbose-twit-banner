@@ -16,7 +16,7 @@ jobs:
     env:
       SRC_DIR: /root/
       REGISTRY: ghcr.io
-      CONTAINER_IMAGE: golang:1.17.6
+      CONTAINER_IMAGE: golang:1.17.7
 
     steps:
     - uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579
