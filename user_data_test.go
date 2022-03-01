@@ -31,8 +31,8 @@ func TestFetchIdForUsername(t *testing.T) {
 		t.Errorf("fetchIdForUsername(client, username) succeess want error")
 	}
 
-	if _, ok := err.(*json.SyntaxError); !ok {
-		t.Errorf("fetchIdForUsername(client, username) returned error %T want *json.SyntaxError", err)
+	if "*errors.errorString" != fmt.Sprintf("%T", err) {
+		t.Errorf("fetchIdForUsername(client, username) returned error %T want *errors.errorString", err)
 	}
 }
 
