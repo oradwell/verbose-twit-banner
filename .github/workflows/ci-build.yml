@@ -42,16 +42,26 @@ jobs:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-    - name: Extract metadata (tags, labels) for Docker
-      id: meta
-      uses: docker/metadata-action@e5622373a38e60fb6d795a4421e56882f2d7a681
-      with:
-        images: ${{ env.REGISTRY }}/${{ github.repository }}
+    - name: Determine tag
+      if: ${{ github.actor != 'dependabot[bot]' && github.repository_owner == 'oradwell' }}
+      id: tag-determiner
+      env:
+        PR_NUM: ${{ github.event.pull_request.number }}
+      run: |
+        SECONDS_IN_YEAR=$(($(date +%s) - $(date +%s --date="$(date +%Y)-01-01 00:00:00 UTC")))
+        # Seconds in hex padded to 7 digits
+        SECONDS_HEX=$(printf "%.7x\n" ${SECONDS_IN_YEAR})
+        # Replace slashes in refname since not supported in image tags
+        REF_NAME=$(echo ${GITHUB_REF_NAME} | sed -e 's~/~-~g')
+        if [ -n "${PR_NUM}" ]
+        then
+          REF_NAME=pr-${PR_NUM}
+        fi
+        echo "::set-output name=tag-name::${REF_NAME}-$(date +%Y)-${SECONDS_HEX}"
     - name: Build and push container image
       if: ${{ github.actor != 'dependabot[bot]' && github.repository_owner == 'oradwell' }}
       uses: docker/build-push-action@7f9d37fa544684fb73bfe4835ed7214c255ce02b
       with:
         context: .
         push: true
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
+        tags: ${{ env.REGISTRY }}/${{ github.repository }}:${{ steps.tag-determiner.outputs.tag-name }}
