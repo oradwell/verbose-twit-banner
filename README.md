@@ -1,6 +1,6 @@
 # verbose-twit-banner
 
-[![Build](https://github.com/oradwell/verbose-twit-banner/actions/workflows/build.yml/badge.svg)](https://github.com/oradwell/verbose-twit-banner/actions/workflows/build.yml)
+[![Build](https://github.com/oradwell/verbose-twit-banner/actions/workflows/ci-build.yml/badge.svg)](https://github.com/oradwell/verbose-twit-banner/actions/workflows/ci-build.yml)
 [![CodeQL](https://github.com/oradwell/verbose-twit-banner/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/oradwell/verbose-twit-banner/actions/workflows/codeql-analysis.yml)
 
 Replace your Twitter profile banner with an image
