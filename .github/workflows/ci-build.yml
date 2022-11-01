@@ -37,7 +37,7 @@ jobs:
           ${CONTAINER_IMAGE} \
           test
     - name: Log in to the Container registry
-      uses: docker/login-action@bb984efc561711aaa26e433c32c3521176eae55b
+      uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
       with:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
