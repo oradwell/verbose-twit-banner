@@ -1,4 +1,4 @@
-FROM golang:1.17.7 AS builder
+FROM golang:1.19.5 AS builder
 WORKDIR /go/src/github.com/oradwell/verbose-twit-banner/
 COPY *.go go.mod go.sum ./
 RUN CGO_ENABLED=0 GOOS=linux \
